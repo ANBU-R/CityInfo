@@ -10,12 +10,7 @@ namespace CityInfo.API.Controllers
         public JsonResult GetCities()
         {
             return new JsonResult(
-                new object[]
-                {
-                    new {id=1, name="Chennai"}
-                    , new {id=2, name="Madurai"}
-
-                }
+                CitiesDataStore.Current.Cities
 
                 );
         }
