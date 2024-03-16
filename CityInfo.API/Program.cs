@@ -7,7 +7,8 @@ builder.Services.AddControllers(
     {
         //return 406 error message if Accept type is not supported
         options.ReturnHttpNotAcceptable = true;
-    }).AddXmlDataContractSerializerFormatters();
+    }).AddNewtonsoftJson()  // changed default json formatter   support "RFC 6902" json patch
+    .AddXmlDataContractSerializerFormatters();
 
 //service to manipulate custom error details
 //builder.Services.AddProblemDetails((options) =>
