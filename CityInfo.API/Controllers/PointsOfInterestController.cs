@@ -20,8 +20,8 @@ namespace CityInfo.API.Controllers
 
         }
 
-        [HttpGet("{interestId}", Name = "GetPointOfInterst")]
-        public ActionResult<PointOfInterestDto> GetPointOfInterst(int cityId, int interestId
+        [HttpGet("{pointOfInterestId}", Name = "GetPointOfInterst")]
+        public ActionResult<PointOfInterestDto> GetPointOfInterst(int cityId, int pointOfInterestId
             )
         {
             var city = CitiesDataStore.Current.Cities.FirstOrDefault(city => city.Id == cityId);
@@ -29,7 +29,7 @@ namespace CityInfo.API.Controllers
             {
                 return NotFound();
             }
-            var pointOfInterest = city.PointsOfInterest.FirstOrDefault(p => p.Id == interestId);
+            var pointOfInterest = city.PointsOfInterest.FirstOrDefault(p => p.Id == pointOfInterestId);
             if (pointOfInterest == null)
             {
                 return NotFound();
@@ -65,12 +65,29 @@ namespace CityInfo.API.Controllers
             return CreatedAtAction("GetPointOfInterst", new
             {
                 cityId,
-                interestId = finalPointOfInterest.Id
+                pointOfInterestId = finalPointOfInterest.Id
 
             },
             finalPointOfInterest
             );
         }
+        [HttpPut("{pointOfInterestId}")]
+        public ActionResult UpdatePointOfInterest(int cityId, int pointOfInterestId, PointOfInterestForUpdateDto pointOfInterest)
+        {
+            var city = CitiesDataStore.Current.Cities.Find(city => city.Id == cityId);
+            if (city == null)
+            {
+                return NotFound();
+            }
+            var pointOfInterstInStore = city.PointsOfInterest.FirstOrDefault(pointofInterest => pointofInterest.Id == pointOfInterestId);
+            if (pointOfInterstInStore == null)
+            {
+                return NotFound();
+            }
 
+            pointOfInterstInStore.Name = pointOfInterest.Name;
+            pointOfInterstInStore.Description = pointOfInterest.Description;
+            return NoContent();
+        }
     }
 }
