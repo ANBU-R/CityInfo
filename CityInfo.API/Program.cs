@@ -1,8 +1,27 @@
+
+using Serilog;
+
+//configure serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .WriteTo.File("log/cityInfo.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+
 var builder = WebApplication.CreateBuilder(args);
-//! clear all the providers configured by default -- console provider configured by default
-builder.Logging.ClearProviders();
-//! add console logging -- manually add console logging provider
-builder.Logging.AddConsole();
+
+
+////! clear all the providers configured by default -- console provider configured by default
+//builder.Logging.ClearProviders();
+//// ! add console logging -- manually add console logging provider 
+//// removing and adding just for learning
+//builder.Logging.AddConsole();
+
+
+//change logger to use serilog 
+builder.Host.UseSerilog();
+
 
 // Add services to the container.
 
