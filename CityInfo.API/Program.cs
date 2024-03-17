@@ -1,4 +1,8 @@
 var builder = WebApplication.CreateBuilder(args);
+//! clear all the providers configured by default -- console provider configured by default
+builder.Logging.ClearProviders();
+//! add console logging -- manually add console logging provider
+builder.Logging.AddConsole();
 
 // Add services to the container.
 
@@ -10,6 +14,7 @@ builder.Services.AddControllers(
     }).AddNewtonsoftJson()  // changed default json formatter   support "RFC 6902" json patch
     .AddXmlDataContractSerializerFormatters();
 
+builder.Services.AddProblemDetails();
 //service to manipulate custom error details
 //builder.Services.AddProblemDetails((options) =>
 //{
@@ -28,6 +33,14 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    //! for global exception handling
+    //! if we want to use global exception handling we've to
+    // ! manually add "builder.Services.AddProblemDetails()" services
+    app.UseExceptionHandler();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
