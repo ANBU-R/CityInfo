@@ -1,6 +1,6 @@
 ﻿namespace CityInfo.API.Services
 {
-    public class LocalMailService : IMailService
+    public class CloudMailService : IMailService
     {
         private string _from = "admin@test.com";
         private string _to = "recipient@test.com";
@@ -11,6 +11,7 @@
             Console.WriteLine($"Subject: {subject}");
             Console.WriteLine($"Body: {body}");
         }
+
 
     }
 }
