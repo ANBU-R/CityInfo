@@ -2,9 +2,15 @@
 {
     public class CloudMailService : IMailService
     {
-        private string _from = "admin@test.com";
-        private string _to = "recipient@test.com";
+        private string _from = string.Empty;
+        private string _to = string.Empty;
 
+        public CloudMailService(IConfiguration configuration)
+        {
+            _from = configuration["MailSettings:MailToAddress"];
+            _to = configuration["MailSettings:MailFromAddress"];
+
+        }
         public void Send(string subject, string body)
         {
             Console.WriteLine($"Mail is send from {_from} to {_to} with {nameof(LocalMailService)}");
