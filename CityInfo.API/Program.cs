@@ -1,4 +1,5 @@
 
+using CityInfo.API;
 using CityInfo.API.Services;
 using Serilog;
 
@@ -55,6 +56,8 @@ builder.Services.AddTransient<IMailService, LocalMailService>();
 #else 
 builder.Services.AddTransient<IMailService, CloudMailService>();
 #endif
+
+builder.Services.AddSingleton<CitiesDataStore>();
 
 var app = builder.Build();
 
