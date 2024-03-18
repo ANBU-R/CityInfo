@@ -1,4 +1,5 @@
 
+using CityInfo.API.Services;
 using Serilog;
 
 //configure serilog
@@ -47,7 +48,7 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddTransient<LocalMailService>();
 
 var app = builder.Build();
 
