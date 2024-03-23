@@ -1,4 +1,6 @@
-﻿using CityInfo.API.Model;
+﻿using AutoMapper;
+using CityInfo.API.Model;
+using CityInfo.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CityInfo.API.Controllers
@@ -8,30 +10,62 @@ namespace CityInfo.API.Controllers
     public class CitiesController : ControllerBase
 
     {
-        private readonly CitiesDataStore _citiesDataStore;
+        private readonly ICityInfoRepository _cityInfoRepository;
+        private readonly IMapper _mapper;
 
-        public CitiesController(CitiesDataStore citiesDataStore)
+        public CitiesController(ICityInfoRepository cityInfoRepository, IMapper mapper)
         {
-            _citiesDataStore = citiesDataStore;
+            _cityInfoRepository = cityInfoRepository ?? throw new ArgumentNullException(nameof(cityInfoRepository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<CityDto>> GetCities()
+        public async Task<ActionResult<IEnumerable<CityWithoutPointOfInterestDto>>>
+            GetCities()
         {
-            return Ok(_citiesDataStore.Cities);
+            // Retrieve city entities asynchronously from the city info repository
+            var cityEntities = await _cityInfoRepository.GetCitiesAsync();
+
+            /* 
+               // Deprecated manual mapping logic
+               // This code snippet is commented out because AutoMapper is now used for mapping
+
+               // Initialize a list to store CityWithoutPointOfInterestDto objects
+               var results = new List<CityWithoutPointOfInterestDto>();
+
+               // Iterate through each city entity
+               foreach (var cityEntity in cityEntities)
+               {
+                   // Create a new CityWithoutPointOfInterestDto object and map properties
+                   results.Add(new CityWithoutPointOfInterestDto
+                   {
+                       Name = cityEntity.Name,
+                       Id = cityEntity.Id,
+                       Description = cityEntity.Description,
+                   });
+               }
+            */
+
+            // Use AutoMapper to map city entities to CityWithoutPointOfInterestDto objects and return as Ok result
+            return Ok(_mapper.Map<IEnumerable<CityWithoutPointOfInterestDto>>(cityEntities));
+
         }
 
         [HttpGet("{id}")]
 
 
-        public ActionResult<CityDto> GetCity(int id)
+        public async Task<IActionResult> GetCity(int id, bool includePointOfInterest = false)
         {
 
-            var response = _citiesDataStore.Cities.Find(city => city.Id == id);
-            if (response == null)
-                return NotFound();
+            var cityEntity = await _cityInfoRepository.GetCityAsync(id, includePointOfInterest);
+            if (cityEntity == null) return NotFound();
+            return includePointOfInterest
+                ? Ok(_mapper.Map<CityDto>(cityEntity))
+                : Ok(_mapper.Map<CityWithoutPointOfInterestDto>(cityEntity));
 
-            return Ok(response);
+
+
 
 
         }
