@@ -87,26 +87,41 @@ namespace CityInfo.API.Controllers
             createdPointOfInterest
             );
         }
-        /*
-           [HttpPut("{pointOfInterestId}")]
-           public ActionResult UpdatePointOfInterest(int cityId, int pointOfInterestId,
-               PointOfInterestForUpdateDto pointOfInterest)
-           {
-               var city = _citiesDataStore.Cities.Find(city => city.Id == cityId);
-               if (city == null)
-               {
-                   return NotFound();
-               }
-               var pointOfInterstFromStore = city.PointsOfInterest.FirstOrDefault(pointofInterest => pointofInterest.Id == pointOfInterestId);
-               if (pointOfInterstFromStore == null)
-               {
-                   return NotFound();
-               }
+        /// <summary>
+        /// Updates a point of interest for a city.
+        /// </summary>
+        /// <param name="cityId">The ID of the city containing the point of interest.</param>
+        /// <param name="pointOfInterestId">The ID of the point of interest to update.</param>
+        /// <param name="pointOfInterest">The DTO containing the updated information for the point of interest.</param>
+        /// <returns>An action result indicating success or failure of the update operation.</returns>
+        [HttpPut("{pointOfInterestId}")]
+        public async Task<ActionResult> UpdatePointOfInterest(int cityId, int pointOfInterestId,
+            PointOfInterestForUpdateDto pointOfInterest)
+        {
+            // Check if the city exists.
+            if (!await _cityInfoRepository.CityExistAsync(cityId))
+            {
+                return NotFound();
+            }
 
-               pointOfInterstFromStore.Name = pointOfInterest.Name;
-               pointOfInterstFromStore.Description = pointOfInterest.Description;
-               return NoContent();
-           }
+            // Retrieve the point of interest entity from the repository.
+            var pointOfInterestEntity = await _cityInfoRepository.GetPointOfInterestAsync(cityId, pointOfInterestId);
+            if (pointOfInterestEntity == null)
+            {
+                return NotFound();
+            }
+
+            // Update the values of the point of interest entity with the values from the DTO.
+            _mapper.Map(pointOfInterest, pointOfInterestEntity);
+
+            // Save changes to the database.
+            await _cityInfoRepository.SaveChangesAsync();
+
+            // Return a success response.
+            return NoContent();
+        }
+
+        /*
 
 
            [HttpPatch("{pointOfInterestId}")]
