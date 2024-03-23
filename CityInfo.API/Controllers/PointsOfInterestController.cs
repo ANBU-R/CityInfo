@@ -2,6 +2,7 @@
 using CityInfo.API.Entities;
 using CityInfo.API.Model;
 using CityInfo.API.Services;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CityInfo.API.Controllers
@@ -87,6 +88,7 @@ namespace CityInfo.API.Controllers
             createdPointOfInterest
             );
         }
+
         /// <summary>
         /// Updates a point of interest for a city.
         /// </summary>
@@ -121,85 +123,91 @@ namespace CityInfo.API.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Partially updates a point of interest for a city using JSON Patch.
+        /// </summary>
+        /// <param name="cityId">The ID of the city containing the point of interest.</param>
+        /// <param name="pointOfInterestId">The ID of the point of interest to partially update.</param>
+        /// <param name="patchDocument">The JSON Patch document containing the partial updates.</param>
+        /// <returns>An action result indicating success or failure of the partial update operation.</returns>
+        [HttpPatch("{pointOfInterestId}")]
+        public async Task<ActionResult> PartialUpdatePointOfInterest(
+            int cityId, int pointOfInterestId,
+            JsonPatchDocument<PointOfInterestForUpdateDto> patchDocument
+            )
+        {
+            // Check if the city exists.
+            if (!await _cityInfoRepository.CityExistAsync(cityId))
+            {
+                return NotFound();
+            }
+
+            // Retrieve the point of interest entity from the repository.
+            var pointOfInterestEntity = await _cityInfoRepository.GetPointOfInterestAsync(cityId, pointOfInterestId);
+            if (pointOfInterestEntity == null)
+            {
+                return NotFound();
+            }
+
+            /// The JsonPatchDocument is of type PointOfInterestForUpdateDto.
+            /// To apply the patch, first, map the pointOfInterestEntity to a PointOfInterestForUpdateDto.
+            /// Then, apply the JSON patch document to the PointOfInterestForUpdateDto.
+            /// Finally, map the PointOfInterestForUpdateDto back to the pointOfInterestEntity.
+
+            // Map the point of interest entity to a PointOfInterestForUpdateDto
+            var pointOfInterestToPatch = _mapper.Map<PointOfInterestForUpdateDto>(pointOfInterestEntity);
+
+            // Apply the patch document to the PointOfInterestForUpdateDto.
+            patchDocument.ApplyTo(pointOfInterestToPatch, ModelState); // ModelState will help us to determine weathe the patch document is valid
+
+            /// Since we're only applying the patch here, automated validation checks won't work.
+            /// Therefore, we need to manually check for bad requests.
+
+            // Check if the patch document is valid.
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            };
+
+            // Manually check if the patched document passes validation rules.
+            if (!TryValidateModel(pointOfInterestToPatch))
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Update the point of interest entity with the patched values.
+            _mapper.Map(pointOfInterestToPatch, pointOfInterestEntity);
+
+            // Save changes to the database.
+            await _cityInfoRepository.SaveChangesAsync();
+
+            // Return a success response.
+            return NoContent();
+        }
+
         /*
+        [HttpDelete("{pointOfInterestId}")]
+        public ActionResult DeletePointOfInterest(int cityId, int pointOfInterestId)
+        {
+            var city = _citiesDataStore.Cities.Find(city => city.Id == cityId);
+            if (city == null)
+            {
+                return NotFound();
+            }
+            var pointOfInterstFromStore = city.PointsOfInterest
+                .FirstOrDefault(pointofInterest => pointofInterest.Id == pointOfInterestId);
+            if (pointOfInterstFromStore == null)
+            {
+                return NotFound();
+            }
 
+            city.PointsOfInterest.Remove(pointOfInterstFromStore);
+            _mailService.Send("Point of Interest deleted", $"city id: {cityId} point of interest id: {pointOfInterestId}");
 
-           [HttpPatch("{pointOfInterestId}")]
-           public ActionResult PartialUpdatePointOfInterest(
-               int cityId, int pointOfInterestId,
-               JsonPatchDocument<PointOfInterestForUpdateDto> patchDocument
-               )
-           {
-               var city = _citiesDataStore.Cities.Find(city => city.Id == cityId);
-               if (city == null)
-               {
-                   return NotFound();
-               }
-               var pointOfInterstFromStore = city.PointsOfInterest
-                   .FirstOrDefault(pointofInterest => pointofInterest.Id == pointOfInterestId);
-               if (pointOfInterstFromStore == null)
-               {
-                   return NotFound();
-               }
+            return NoContent();
+        }
 
-               ///check the patch document is valid
-               var pointOfInterestToPatch = new PointOfInterestForUpdateDto()
-               {
-                   Name = pointOfInterstFromStore.Name,
-                   Description = pointOfInterstFromStore.Description,
-               };
-
-               //apply patch  to pointOfInterestToPatch
-               patchDocument.ApplyTo(pointOfInterestToPatch, ModelState); // ModelState will help us to determine weathe the patch document is valid
-
-               //we're only applying the patch here so automated
-                // validation checks won't work  so we've to check manually for bad request
-
-
-               //check if patchDocument is valid (check input body have valid properties)
-               if (!ModelState.IsValid)
-               {
-                   return BadRequest(ModelState);
-               };
-
-               // check the patched document checks out
-               //  all the validation rule we put in the model like[MaxLength] [Required]
-               if (!TryValidateModel(pointOfInterestToPatch))
-               {
-                   return BadRequest(ModelState);
-               }
-
-               //if the patchDocument is valid udate the changes 
-               pointOfInterstFromStore.Name = pointOfInterestToPatch.Name;
-               pointOfInterstFromStore.Description = pointOfInterestToPatch.Description;
-
-
-               return NoContent();
-           }
-
-
-           [HttpDelete("{pointOfInterestId}")]
-           public ActionResult DeletePointOfInterest(int cityId, int pointOfInterestId)
-           {
-               var city = _citiesDataStore.Cities.Find(city => city.Id == cityId);
-               if (city == null)
-               {
-                   return NotFound();
-               }
-               var pointOfInterstFromStore = city.PointsOfInterest
-                   .FirstOrDefault(pointofInterest => pointofInterest.Id == pointOfInterestId);
-               if (pointOfInterstFromStore == null)
-               {
-                   return NotFound();
-               }
-
-               city.PointsOfInterest.Remove(pointOfInterstFromStore);
-               _mailService.Send("Point of Interest deleted", $"city id: {cityId} point of interest id: {pointOfInterestId}");
-
-               return NoContent();
-           }
-
-           */
+        */
     }
 
 }
