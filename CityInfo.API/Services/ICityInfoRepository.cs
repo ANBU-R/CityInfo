@@ -49,5 +49,12 @@ namespace CityInfo.API.Services
         /// Saves changes to the data store asynchronously.
         /// </summary>
         Task<bool> SaveChangesAsync();
+
+        /// <summary>
+        /// Deletes a point of interest.
+        /// </summary>
+        /// <param name="pointOfInterest">The point of interest to delete.</param>
+
+        void DeletePointOfInterest(PointOfInterest pointOfInterest);
     }
 }

@@ -185,29 +185,41 @@ namespace CityInfo.API.Controllers
             return NoContent();
         }
 
-        /*
+        /// <summary>
+        /// Deletes a point of interest for a city.
+        /// </summary>
+        /// <param name="cityId">The ID of the city containing the point of interest.</param>
+        /// <param name="pointOfInterestId">The ID of the point of interest to delete.</param>
+        /// <returns>An action result indicating success or failure of the delete operation.</returns>
         [HttpDelete("{pointOfInterestId}")]
-        public ActionResult DeletePointOfInterest(int cityId, int pointOfInterestId)
+        public async Task<ActionResult> DeletePointOfInterest(int cityId, int pointOfInterestId)
         {
-            var city = _citiesDataStore.Cities.Find(city => city.Id == cityId);
-            if (city == null)
-            {
-                return NotFound();
-            }
-            var pointOfInterstFromStore = city.PointsOfInterest
-                .FirstOrDefault(pointofInterest => pointofInterest.Id == pointOfInterestId);
-            if (pointOfInterstFromStore == null)
+            // Check if the city exists.
+            if (!await _cityInfoRepository.CityExistAsync(cityId))
             {
                 return NotFound();
             }
 
-            city.PointsOfInterest.Remove(pointOfInterstFromStore);
+            // Retrieve the point of interest entity from the repository.
+            var pointOfInterestEntity = await _cityInfoRepository.GetPointOfInterestAsync(cityId, pointOfInterestId);
+            if (pointOfInterestEntity == null)
+            {
+                return NotFound();
+            }
+
+            // Delete the point of interest entity.
+            _cityInfoRepository.DeletePointOfInterest(pointOfInterestEntity);
+
+            // Save changes to the database.
+            await _cityInfoRepository.SaveChangesAsync();
+
+            // Send notification email about the deletion.
             _mailService.Send("Point of Interest deleted", $"city id: {cityId} point of interest id: {pointOfInterestId}");
 
+            // Return a success response.
             return NoContent();
         }
 
-        */
     }
 
 }
