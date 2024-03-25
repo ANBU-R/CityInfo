@@ -24,7 +24,48 @@ namespace CityInfo.API.Services
         {
             return await _context.Cities.ToListAsync();
         }
+        /// <inheritdoc/>
+        /// <summary>
+        /// Asynchronously retrieves a collection of cities based on the provided name and search query.
+        /// If both <paramref name="name"/> and <paramref name="searchQuery"/> are null or whitespace, 
+        /// all cities are returned.
+        /// </summary>
+        /// <param name="name">Optional parameter representing the name of the city to search for.</param>
+        /// <param name="searchQuery">Optional parameter representing additional search criteria for filtering cities.</param>
+        /// <returns>
+        /// A task representing the asynchronous operation. The task result contains an enumerable collection of City objects
+        /// that match the specified criteria. If no criteria are provided, all cities may be returned.
+        /// </returns>
+        public async Task<IEnumerable<City>> GetCitiesAsync(string? name, string? searchQuery)
+        {
+            // If both name and searchQuery are null or whitespace, return all cities
+            if (string.IsNullOrEmpty(name) && string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return await GetCitiesAsync();
+            }
+            // Convert DbSet to IQueryable for dynamic querying
+            var collection = _context.Cities as IQueryable<City>;
 
+            // If name is provided, filter by exact match
+            if (!string.IsNullOrEmpty(name))
+            {
+                //Trim white spaces
+                name = name.Trim();
+                collection = collection.Where(c => c.Name == name);
+            }
+
+            // If searchQuery is provided, filter by name or description containing the searchQuery
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                searchQuery = searchQuery.Trim();
+                collection = collection.Where(collection => collection.Name.Contains(searchQuery) ||
+                (collection.Description != null && collection.Description.Contains
+                (searchQuery))); //Description is nullable string
+            }
+            // Execute query asynchronously and return the result
+            return await collection.ToListAsync();
+
+        }
         /// <inheritdoc/>
         public async Task<City?> GetCityAsync(int cityId, bool includePointOfInterest)
         {
@@ -83,6 +124,7 @@ namespace CityInfo.API.Services
         {
             _context.PointOfInterests.Remove(pointOfInterest);
         }
+
 
     }
 }

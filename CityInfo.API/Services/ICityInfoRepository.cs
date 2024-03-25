@@ -13,6 +13,18 @@ namespace CityInfo.API.Services
         Task<IEnumerable<City>> GetCitiesAsync();
 
         /// <summary>
+        /// Asynchronously retrieves a collection of cities based on the provided name and search query.
+        /// </summary>
+        /// <param name="name">Optional parameter representing the name of the city to search for.</param>
+        /// <param name="searchQuery">Optional parameter representing additional search criteria for filtering cities.</param>
+        /// <returns>
+        /// A task representing the asynchronous operation. The task result contains an enumerable collection of City objects
+        /// that match the specified criteria. If no criteria are provided, all cities may be returned.
+        /// </returns>
+
+        Task<IEnumerable<City>> GetCitiesAsync(string? name, string? serachQuery);
+
+        /// <summary>
         /// Retrieves a city asynchronously by its ID.
         /// </summary>
         /// <param name="cityId">The ID of the city to retrieve.</param>
@@ -56,5 +68,7 @@ namespace CityInfo.API.Services
         /// <param name="pointOfInterest">The point of interest to delete.</param>
 
         void DeletePointOfInterest(PointOfInterest pointOfInterest);
+
+
     }
 }

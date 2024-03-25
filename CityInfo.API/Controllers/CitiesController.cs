@@ -22,10 +22,10 @@ namespace CityInfo.API.Controllers
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CityWithoutPointOfInterestDto>>>
-            GetCities()
+            GetCities([FromQuery] string? name, [FromQuery] string? searchQuery)
         {
             // Retrieve city entities asynchronously from the city info repository
-            var cityEntities = await _cityInfoRepository.GetCitiesAsync();
+            var cityEntities = await _cityInfoRepository.GetCitiesAsync(name, searchQuery);
 
             /* 
                // Deprecated manual mapping logic
