@@ -24,7 +24,7 @@ namespace CityInfo.API.Services
         /// that match the specified criteria. If no criteria are provided, all cities may be returned.
         /// </returns>
 
-        Task<IEnumerable<City>> GetCitiesAsync(string? name, string? serachQuery, int pageNumber, int pageSize);
+        Task<(IEnumerable<City>, PaginationMetadata)> GetCitiesAsync(string? name, string? serachQuery, int pageNumber, int pageSize);
 
         /// <summary>
         /// Retrieves a city asynchronously by its ID.

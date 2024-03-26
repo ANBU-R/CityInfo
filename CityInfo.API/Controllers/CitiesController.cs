@@ -2,6 +2,7 @@
 using CityInfo.API.Model;
 using CityInfo.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace CityInfo.API.Controllers
 {
@@ -30,7 +31,9 @@ namespace CityInfo.API.Controllers
             pageSize = Math.Min(pageSize, MAX_PAGE_SIZE);
 
             // Retrieve city entities asynchronously from the city info repository
-            var cityEntities = await _cityInfoRepository.GetCitiesAsync(name, searchQuery, pageNumber, pageSize);
+            var (cityEntities, paginationMetadata) = await _cityInfoRepository.GetCitiesAsync(name, searchQuery, pageNumber, pageSize);
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
 
             /* 
                // Deprecated manual mapping logic

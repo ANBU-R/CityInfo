@@ -33,10 +33,12 @@ namespace CityInfo.API.Services
         /// <param name="name">Optional parameter representing the name of the city to search for.</param>
         /// <param name="searchQuery">Optional parameter representing additional search criteria for filtering cities.</param>
         /// <returns>
-        /// A task representing the asynchronous operation. The task result contains an enumerable collection of City objects
-        /// that match the specified criteria. If no criteria are provided, all cities may be returned.
+        /// A task representing the asynchronous operation. The task result contains a tuple with two elements:
+        /// - An enumerable collection of City objects that match the specified criteria.
+        /// - Pagination metadata indicating total items, page size, and current page number.
+        /// If no criteria are provided, all cities may be returned.
         /// </returns>
-        public async Task<IEnumerable<City>> GetCitiesAsync(string? name, string? searchQuery, int pageNumber, int pageSize)
+        public async Task<(IEnumerable<City>, PaginationMetadata)> GetCitiesAsync(string? name, string? searchQuery, int pageNumber, int pageSize)
         {
             // Convert DbSet to IQueryable for dynamic querying
             var collection = _context.Cities as IQueryable<City>;
@@ -58,11 +60,20 @@ namespace CityInfo.API.Services
                 (searchQuery))); //Description is nullable string
             }
 
+            // Get Total item count in the collection(before pagination)
+            int totalItemCount = await collection.CountAsync();
+
             //Add Pagination
             collection = collection.Skip((pageNumber - 1) * pageSize).Take(pageSize);
 
-            // Execute query asynchronously and return the result
-            return await collection.ToListAsync();
+            // Create PaginationMetadata object
+            var paginationMetadata = new PaginationMetadata(totalItemCount, pageSize, currentPage: pageNumber);
+
+            // Execute query asynchronously to retrieve paginated result
+            var result = await collection.ToListAsync();
+
+            // and return the result and paginationMetadata as tuple
+            return (result, paginationMetadata);
 
         }
         /// <inheritdoc/>
