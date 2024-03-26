@@ -36,13 +36,8 @@ namespace CityInfo.API.Services
         /// A task representing the asynchronous operation. The task result contains an enumerable collection of City objects
         /// that match the specified criteria. If no criteria are provided, all cities may be returned.
         /// </returns>
-        public async Task<IEnumerable<City>> GetCitiesAsync(string? name, string? searchQuery)
+        public async Task<IEnumerable<City>> GetCitiesAsync(string? name, string? searchQuery, int pageNumber, int pageSize)
         {
-            // If both name and searchQuery are null or whitespace, return all cities
-            if (string.IsNullOrEmpty(name) && string.IsNullOrWhiteSpace(searchQuery))
-            {
-                return await GetCitiesAsync();
-            }
             // Convert DbSet to IQueryable for dynamic querying
             var collection = _context.Cities as IQueryable<City>;
 
@@ -62,6 +57,10 @@ namespace CityInfo.API.Services
                 (collection.Description != null && collection.Description.Contains
                 (searchQuery))); //Description is nullable string
             }
+
+            //Add Pagination
+            collection = collection.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
             // Execute query asynchronously and return the result
             return await collection.ToListAsync();
 

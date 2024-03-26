@@ -17,12 +17,14 @@ namespace CityInfo.API.Services
         /// </summary>
         /// <param name="name">Optional parameter representing the name of the city to search for.</param>
         /// <param name="searchQuery">Optional parameter representing additional search criteria for filtering cities.</param>
+        /// <param name="pageNumber">The page number for pagination.</param>
+        /// <param name="pageSize">The page size for pagination.</param>
         /// <returns>
         /// A task representing the asynchronous operation. The task result contains an enumerable collection of City objects
         /// that match the specified criteria. If no criteria are provided, all cities may be returned.
         /// </returns>
 
-        Task<IEnumerable<City>> GetCitiesAsync(string? name, string? serachQuery);
+        Task<IEnumerable<City>> GetCitiesAsync(string? name, string? serachQuery, int pageNumber, int pageSize);
 
         /// <summary>
         /// Retrieves a city asynchronously by its ID.
