@@ -53,7 +53,20 @@ builder.Services.AddProblemDetails();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Add Swagger generation services to the service container.
+builder.Services.AddSwaggerGen(setupAction =>
+{
+    // Get the full path of the XML documentation file for the API project.
+    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, "CityInfo.API.xml");
+
+    // Include XML comments from the specified file in Swagger documentation.
+    setupAction.IncludeXmlComments(xmlCommentsFullPath);
+}); builder.Services.AddSwaggerGen(setupAction =>
+{
+    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, "CityInfo.API.xml");
+    setupAction.IncludeXmlComments(xmlCommentsFullPath);
+});
 
 //by compiler directory we're using different mail serivices for different builds
 #if DEBUG
@@ -113,7 +126,7 @@ if (!app.Environment.IsDevelopment())
 {
     //! for global exception handling
     //! if we want to use global exception handling we've to
-    // ! manually add "builder.Services.AddProblemDetails()" services
+    //! manually add "builder.Services.AddProblemDetails()" services
     app.UseExceptionHandler();
 }
 
