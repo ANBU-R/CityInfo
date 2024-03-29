@@ -18,6 +18,8 @@ namespace CityInfo.API.Controllers
     [ApiVersion(1)]
     // Specify that this controller also supports API version 2
     [ApiVersion(2)]
+    // All the endpoints in the controller may producce 401 unAuthorized error
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class CitiesController : ControllerBase
 
     {
@@ -32,17 +34,23 @@ namespace CityInfo.API.Controllers
 
         }
 
+        /// <summary>
+        /// Retrieves a list of cities based on optional parameters such as name and search query.
+        /// </summary>
+        /// <param name="name">The name of the city to filter by.</param>
+        /// <param name="searchQuery">A search query to filter cities by.</param>
+        /// <param name="pageNumber">The page number of the results to retrieve.</param>
+        /// <param name="pageSize">The number of cities per page.</param>
+        /// <returns>A list of cities without point of interest information.</returns>
+        /// <response code="200">Returns cities based in given input.</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IEnumerable<CityWithoutPointOfInterestDto>>>
             GetCities([FromQuery] string? name, [FromQuery] string? searchQuery,
             [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
         {
 
-
-            foreach (var claim in User.Claims)
-            {
-                Console.WriteLine(claim.Type);
-            }
             // Ensure that the pageSize does not exceed the maximum allowed page size (MAX_PAGE_SIZE)
             pageSize = Math.Min(pageSize, MAX_PAGE_SIZE);
 
@@ -76,22 +84,30 @@ namespace CityInfo.API.Controllers
 
         }
 
+
+        /// <summary>
+        /// Retrieves a city by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the city to retrieve.</param>
+        /// <param name="includePointOfInterest">A flag indicating whether to include point of interest information.</param>
+        /// <returns>A city with or without PointOfInterest.</returns>
+        /// <response code="200">Returns Requested City</response>  
+
         [HttpGet("{id}")]
-
-
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetCity(int id, bool includePointOfInterest = false)
         {
-
+            // Retrieves the city entity asynchronously from the city info repository
             var cityEntity = await _cityInfoRepository.GetCityAsync(id, includePointOfInterest);
+            // Checks if the city entity is null, and returns NotFound if it is
             if (cityEntity == null) return NotFound();
+
+            // Returns the city entity mapped to either CityDto or CityWithoutPointOfInterestDto based on the includePointOfInterest flag
             return includePointOfInterest
                 ? Ok(_mapper.Map<CityDto>(cityEntity))
                 : Ok(_mapper.Map<CityWithoutPointOfInterestDto>(cityEntity));
-
-
-
-
-
         }
     }
 }

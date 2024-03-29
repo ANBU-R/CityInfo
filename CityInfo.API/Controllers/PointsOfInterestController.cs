@@ -17,6 +17,8 @@ namespace CityInfo.API.Controllers
     [Authorize]
     // Specify the API version of this controller
     [ApiVersion(2)]
+    //All the endpoints may produce 401 code
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class PointsOfInterestController : ControllerBase
     {
         private readonly ILogger<PointsOfInterestController> _logger;
@@ -35,58 +37,96 @@ namespace CityInfo.API.Controllers
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
+
+        /// <summary>
+        /// Retrieves points of interest for a given city.
+        /// </summary>
+        /// <param name="cityId">The ID of the city to retrieve points of interest for.</param>
+        /// <returns>A list of points of interest.</returns>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<PointOfInterestDto>>> GetPointsOfInterest(int cityId)
         {
+            // Check if the city exists
             if (!await _cityInfoRepository.CityExistAsync(cityId))
             {
                 return NotFound();
             }
 
+            // Retrieve points of interest for the specified city
             var pointOfInterestEntity = await _cityInfoRepository.GetPointOfInterestsAsync(cityId);
 
+            // Map the entity to DTO and return as OK response
             return Ok(_mapper.Map<IEnumerable<PointOfInterestDto>>(pointOfInterestEntity));
 
         }
 
+        /// <summary>
+        /// Retrieves a point of interest by ID.
+        /// </summary>
+        /// <param name="cityId">The ID of the city.</param>
+        /// <param name="pointOfInterestId">The ID of the point of interest to retrieve.</param>
+        /// <returns>The point of interest.</returns>
         [HttpGet("{pointOfInterestId}", Name = "GetPointOfInterst")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PointOfInterestDto>> GetPointOfInterst(int cityId, int pointOfInterestId)
         {
+            // Check if the city exists.
             if (!await _cityInfoRepository.CityExistAsync(cityId))
             {
                 return NotFound();
             }
+            // Retrieve the point of interest entity from the repository
             var pointOfInterestEntity = await _cityInfoRepository.GetPointOfInterestAsync(cityId, pointOfInterestId);
+
+            // Check if the point of interest exists
             if (pointOfInterestEntity == null)
             {
                 return NotFound();
             }
 
-
+            // Map the point of interest entity to DTO and return as OK response
             return Ok(_mapper.Map<PointOfInterestDto>(pointOfInterestEntity));
 
         }
+        /// <summary>
+        /// Creates a new point of interest for the specified city.
+        /// </summary>
+        /// <param name="cityId">The ID of the city to create the point of interest for.</param>
+        /// <param name="pointOfInterest">The data for the new point of interest.</param>
+        /// <returns>The created point of interest.</returns>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PointOfInterestDto>> CreatePointOfInterest
             (int cityId, [FromBody] PointOfInterestForCreationDto pointOfInterest)
         {
 
-
+            // Check if the city exists
             if (!await _cityInfoRepository.CityExistAsync(cityId))
             {
                 return NotFound();
             }
 
-
+            // Map the incoming DTO to an entity
             var finalPointOfInterest = _mapper.Map<PointOfInterest>(pointOfInterest);
-            await _cityInfoRepository.AddPointOfInterestAsync(cityId, finalPointOfInterest);
-            await _cityInfoRepository.SaveChangesAsync(); //will add id to finalPointOfInterest 
 
+            // Add the point of interest to the specified city
+            await _cityInfoRepository.AddPointOfInterestAsync(cityId, finalPointOfInterest);
+
+            // Save changes to persist the newly added point of interest
+            await _cityInfoRepository.SaveChangesAsync();
+
+            // Map the created entity back to DTO
             var createdPointOfInterest = _mapper.Map<PointOfInterestDto>(finalPointOfInterest);
 
 
-            //this method setup  location header that point to url of the newly 
-            //created resource
+            // Set up the location header that points to the URL of the newly created resource
             return CreatedAtAction("GetPointOfInterst", new
             {
                 cityId,
@@ -97,6 +137,7 @@ namespace CityInfo.API.Controllers
             );
         }
 
+
         /// <summary>
         /// Updates a point of interest for a city.
         /// </summary>
@@ -105,6 +146,9 @@ namespace CityInfo.API.Controllers
         /// <param name="pointOfInterest">The DTO containing the updated information for the point of interest.</param>
         /// <returns>An action result indicating success or failure of the update operation.</returns>
         [HttpPut("{pointOfInterestId}")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> UpdatePointOfInterest(int cityId, int pointOfInterestId,
             PointOfInterestForUpdateDto pointOfInterest)
         {
@@ -131,6 +175,7 @@ namespace CityInfo.API.Controllers
             return NoContent();
         }
 
+
         /// <summary>
         /// Partially updates a point of interest for a city using JSON Patch.
         /// </summary>
@@ -139,6 +184,9 @@ namespace CityInfo.API.Controllers
         /// <param name="patchDocument">The JSON Patch document containing the partial updates.</param>
         /// <returns>An action result indicating success or failure of the partial update operation.</returns>
         [HttpPatch("{pointOfInterestId}")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> PartialUpdatePointOfInterest(
             int cityId, int pointOfInterestId,
             JsonPatchDocument<PointOfInterestForUpdateDto> patchDocument
@@ -157,10 +205,10 @@ namespace CityInfo.API.Controllers
                 return NotFound();
             }
 
-            /// The JsonPatchDocument is of type PointOfInterestForUpdateDto.
-            /// To apply the patch, first, map the pointOfInterestEntity to a PointOfInterestForUpdateDto.
-            /// Then, apply the JSON patch document to the PointOfInterestForUpdateDto.
-            /// Finally, map the PointOfInterestForUpdateDto back to the pointOfInterestEntity.
+            // The JsonPatchDocument is of type PointOfInterestForUpdateDto.
+            // To apply the patch, first, map the pointOfInterestEntity to a PointOfInterestForUpdateDto.
+            // Then, apply the JSON patch document to the PointOfInterestForUpdateDto.
+            // Finally, map the PointOfInterestForUpdateDto back to the pointOfInterestEntity.
 
             // Map the point of interest entity to a PointOfInterestForUpdateDto
             var pointOfInterestToPatch = _mapper.Map<PointOfInterestForUpdateDto>(pointOfInterestEntity);
@@ -168,8 +216,8 @@ namespace CityInfo.API.Controllers
             // Apply the patch document to the PointOfInterestForUpdateDto.
             patchDocument.ApplyTo(pointOfInterestToPatch, ModelState); // ModelState will help us to determine weathe the patch document is valid
 
-            /// Since we're only applying the patch here, automated validation checks won't work.
-            /// Therefore, we need to manually check for bad requests.
+            // Since we're only applying the patch here, automated validation checks won't work.
+            // Therefore, we need to manually check for bad requests.
 
             // Check if the patch document is valid.
             if (!ModelState.IsValid)
@@ -200,6 +248,9 @@ namespace CityInfo.API.Controllers
         /// <param name="pointOfInterestId">The ID of the point of interest to delete.</param>
         /// <returns>An action result indicating success or failure of the delete operation.</returns>
         [HttpDelete("{pointOfInterestId}")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<ActionResult> DeletePointOfInterest(int cityId, int pointOfInterestId)
         {
             // Check if the city exists.
