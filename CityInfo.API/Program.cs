@@ -1,4 +1,5 @@
 
+using Asp.Versioning;
 using CityInfo.API;
 using CityInfo.API.DbContexts;
 using CityInfo.API.Services;
@@ -92,7 +93,18 @@ builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
     };
 });
 
+// Configure API versioning 
+builder.Services.AddApiVersioning(setupAction =>
+{
+    // Enable reporting of API versions in responses
+    setupAction.ReportApiVersions = true;
 
+    // Set the default API version to 1.0
+    setupAction.DefaultApiVersion = new ApiVersion(1, 0);
+
+    // Assume the default API version (1.0) when no version is specified in the request
+    setupAction.AssumeDefaultVersionWhenUnspecified = true;
+}).AddMvc();
 
 var app = builder.Build();
 
