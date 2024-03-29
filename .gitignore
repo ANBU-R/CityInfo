@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/CityInfo.API/CityInfo.API.xml
+/CityInfo.API/CityInfo.db
