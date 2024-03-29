@@ -21,4 +21,4 @@ namespace CityInfo.API.Model
         public string? Description { get; set; }
     }
 }
-}
+
