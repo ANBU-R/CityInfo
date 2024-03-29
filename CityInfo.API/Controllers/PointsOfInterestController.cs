@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using Asp.Versioning;
+using AutoMapper;
 using CityInfo.API.Entities;
 using CityInfo.API.Model;
 using CityInfo.API.Services;
@@ -11,6 +12,7 @@ namespace CityInfo.API.Controllers
     [Route("api/cities/{cityId}/pointsofinterest")]
     [ApiController]
     [Authorize]
+    [ApiVersion(2)]
     public class PointsOfInterestController : ControllerBase
     {
         private readonly ILogger<PointsOfInterestController> _logger;
