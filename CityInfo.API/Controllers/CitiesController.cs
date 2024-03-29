@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CityInfo.API.Model;
 using CityInfo.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -8,6 +9,7 @@ namespace CityInfo.API.Controllers
 {
     [ApiController]
     [Route("api/cities")]
+    [Authorize]
     public class CitiesController : ControllerBase
 
     {
@@ -27,6 +29,12 @@ namespace CityInfo.API.Controllers
             GetCities([FromQuery] string? name, [FromQuery] string? searchQuery,
             [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
         {
+
+
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine(claim.Type);
+            }
             // Ensure that the pageSize does not exceed the maximum allowed page size (MAX_PAGE_SIZE)
             pageSize = Math.Min(pageSize, MAX_PAGE_SIZE);
 
