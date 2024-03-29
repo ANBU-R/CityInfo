@@ -3,7 +3,9 @@ using CityInfo.API;
 using CityInfo.API.DbContexts;
 using CityInfo.API.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using System.Text;
 
 //configure serilog
 Log.Logger = new LoggerConfiguration()
@@ -68,6 +70,30 @@ builder.Services.AddScoped<ICityInfoRepository, CityInfoRepository>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 
+
+// Adding authentication services with JWT bearer authentication
+builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
+{
+    // Configuring token validation parameters
+    options.TokenValidationParameters = new()
+    {
+        // Validating the issuer of the token
+        ValidateIssuer = true,
+        // Validating the audience of the token
+        ValidateAudience = true,
+        // Validating the signing key used to sign the token
+        ValidateIssuerSigningKey = true,
+        // Setting the valid issuer from configuration
+        ValidIssuer = builder.Configuration["Authentication:Issuer"],
+        // Setting the valid audience from configuration
+        ValidAudience = builder.Configuration["Authentication:Audience"],
+        // Setting the issuer signing key from configuration
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Authentication:SecretForKey"]))
+    };
+});
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -87,6 +113,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseEndpoints(endpoints => endpoints.MapControllers());
 //app.MapControllers();
