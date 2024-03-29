@@ -8,10 +8,15 @@ using System.Text.Json;
 
 namespace CityInfo.API.Controllers
 {
+    // Indicate that this controller is an API controller
     [ApiController]
-    [Route("api/cities")]
+    // Define the route for accessing the cities endpoint, incorporating API versioning
+    [Route("api/v{version:apiversion}/cities")]
+    // Authorize access to this controller, ensuring only authenticated users can access its endpoints
     [Authorize]
+    // Specify that this controller supports API version 1
     [ApiVersion(1)]
+    // Specify that this controller also supports API version 2
     [ApiVersion(2)]
     public class CitiesController : ControllerBase
 

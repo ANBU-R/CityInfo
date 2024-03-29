@@ -9,9 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CityInfo.API.Controllers
 {
-    [Route("api/cities/{cityId}/pointsofinterest")]
+    // Indicate that this controller is an API controller
     [ApiController]
+    // Define the route for accessing the points of interest endpoint, incorporating API versioning and city ID
+    [Route("api/v{version:apiversion}/cities/{cityId}/pointsofinterest")]
+    // Authorize access to this controller, ensuring only authenticated users can access its endpoints
     [Authorize]
+    // Specify the API version of this controller
     [ApiVersion(2)]
     public class PointsOfInterestController : ControllerBase
     {
