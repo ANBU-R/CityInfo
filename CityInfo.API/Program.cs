@@ -1,10 +1,12 @@
 
 using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using CityInfo.API;
 using CityInfo.API.DbContexts;
 using CityInfo.API.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
 
@@ -54,19 +56,7 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-// Add Swagger generation services to the service container.
-builder.Services.AddSwaggerGen(setupAction =>
-{
-    // Get the full path of the XML documentation file for the API project.
-    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, "CityInfo.API.xml");
 
-    // Include XML comments from the specified file in Swagger documentation.
-    setupAction.IncludeXmlComments(xmlCommentsFullPath);
-}); builder.Services.AddSwaggerGen(setupAction =>
-{
-    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, "CityInfo.API.xml");
-    setupAction.IncludeXmlComments(xmlCommentsFullPath);
-});
 
 //by compiler directory we're using different mail serivices for different builds
 #if DEBUG
@@ -117,8 +107,51 @@ builder.Services.AddApiVersioning(setupAction =>
 
     // Assume the default API version (1.0) when no version is specified in the request
     setupAction.AssumeDefaultVersionWhenUnspecified = true;
-}).AddMvc();
+}).AddMvc().AddApiExplorer(setupAction =>
+{
+    setupAction.SubstituteApiVersionInUrl = true;
+});
 
+var apiVersionDescriptionProvider = builder.Services.BuildServiceProvider().GetRequiredService<IApiVersionDescriptionProvider>();
+// Add Swagger generation services to the service container.
+builder.Services.AddSwaggerGen(setupAction =>
+{
+    // Generate Swagger documentation for each API version
+    foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+    {
+        setupAction.SwaggerDoc($"{description.GroupName}",
+            new()
+            {
+                Title = "City Info API",
+                Version = description.ApiVersion.ToString(),
+                Description = "To Access Cities and Points of Interest"
+            });
+    }
+    // Get the full path of the XML documentation file for the API project.
+    var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, "CityInfo.API.xml");
+
+    // Include XML comments from the specified file in Swagger documentation.
+    setupAction.IncludeXmlComments(xmlCommentsFullPath);
+    setupAction.AddSecurityDefinition("CityInfoBearerAuth", new()
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        Description = "Input Valid Token to access"
+    });
+    setupAction.AddSecurityRequirement(new()
+    {
+        {
+            new()
+            {
+            Reference=new OpenApiReference()
+            {
+                Type=ReferenceType.SecurityScheme,
+                Id ="CityInfoBearerAuth"
+            }
+            }, new List<string>()
+        }
+    });
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -132,8 +165,23 @@ if (!app.Environment.IsDevelopment())
 
 if (app.Environment.IsDevelopment())
 {
+    // Enable Swagger
     app.UseSwagger();
-    app.UseSwaggerUI();
+
+    // Configure Swagger UI
+    app.UseSwaggerUI(setupAction =>
+    {
+        // Get API version descriptions
+        var descriptions = app.DescribeApiVersions();
+
+        // Iterate over each API version description
+        foreach (var description in descriptions)
+        {
+            // Configure Swagger endpoint for each API version
+            setupAction.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseHttpsRedirection();
